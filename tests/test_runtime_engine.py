@@ -1420,6 +1420,8 @@ class RuntimeEngineTests(unittest.TestCase):
             [arm_value(action) for action in policy.requests[1].prev_action_chunk],
             [1.0, 2.0, 3.0, 3.0],
         )
+        self.assertIs(policy.requests[1].action_prefix, policy.requests[1].prev_action_chunk)
+        self.assertEqual(policy.requests[1].prefix_length, 1)
 
     def test_async_runtime_enable_rtc_prev_chunk_tracks_current_active_chunk(
         self,

@@ -1048,6 +1048,41 @@ class SchedulerTests(unittest.TestCase):
             [7.0, 8.0],
         )
 
+    def test_chunk_request_accepts_top_level_prefix_fields(self) -> None:
+        prefix = [arm_action(7.0), arm_action(8.0)]
+
+        request = make_chunk_request(
+            request_step=0,
+            request_time_s=0.0,
+            active_chunk_length=0,
+            remaining_steps=0,
+            latency_steps=0,
+            action_prefix=prefix,
+            prefix_length=2,
+        )
+
+        self.assertIs(request.action_prefix, prefix)
+        self.assertEqual(request.prefix_length, 2)
+        self.assertIsNone(request.prev_action_chunk)
+        self.assertIsNone(request.inference_delay)
+
+    def test_chunk_request_mirrors_rtc_fields_to_prefix_fields(self) -> None:
+        prefix = [arm_action(7.0), arm_action(8.0)]
+
+        request = make_chunk_request(
+            request_step=0,
+            request_time_s=0.0,
+            active_chunk_length=0,
+            remaining_steps=0,
+            latency_steps=0,
+            prev_action_chunk=prefix,
+            inference_delay=2,
+            execute_horizon=3,
+        )
+
+        self.assertIs(request.action_prefix, prefix)
+        self.assertEqual(request.prefix_length, 2)
+
     def test_chunk_scheduler_enable_rtc_does_not_change_latency_or_trigger_logic(
         self,
     ) -> None:
@@ -1103,6 +1138,8 @@ class SchedulerTests(unittest.TestCase):
             [3.0, 4.0, 5.0, 5.0],
         )
         self.assertIsNotNone(with_rtc.request.rtc_args)
+        self.assertIs(with_rtc.request.action_prefix, with_rtc.request.prev_action_chunk)
+        self.assertEqual(with_rtc.request.prefix_length, 2)
 
     def test_chunk_scheduler_latency_steps_offset_changes_request_hints_without_affecting_trigger_logic(
         self,

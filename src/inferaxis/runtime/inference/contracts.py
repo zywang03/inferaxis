@@ -39,6 +39,8 @@ class ChunkRequest:
     by the runtime. For easier interoperability with RTC-style policy code,
     the same values are also mirrored onto ``prev_action_chunk``,
     ``inference_delay``, and ``execute_horizon`` directly on this object.
+    For prefix-conditioning policy code, the current prefix window is also
+    exposed as ``action_prefix`` with ``prefix_length``.
     Runtime hot paths treat any action objects exposed through this request as
     shared read-only references suitable for websocket / serialization
     consumers, not in-place mutation.
@@ -52,6 +54,8 @@ class ChunkRequest:
     prev_action_chunk: list[Action] | None = None
     inference_delay: int | None = None
     execute_horizon: int | None = None
+    action_prefix: list[Action] | None = None
+    prefix_length: int | None = None
     rtc_args: RtcArgs | None = None
 
     def __post_init__(self) -> None:
@@ -81,6 +85,7 @@ class ChunkRequest:
                     "ChunkRequest.execute_horizon must match "
                     "ChunkRequest.rtc_args.execute_horizon when both are provided."
                 )
+            self._sync_prefix_fields()
             return
 
         if (
@@ -99,6 +104,28 @@ class ChunkRequest:
                 if self.execute_horizon is None
                 else self.execute_horizon,
             )
+        self._sync_prefix_fields()
+
+    def _sync_prefix_fields(self) -> None:
+        """Mirror RTC-style request hints onto prefix-style request fields."""
+
+        if self.prev_action_chunk is not None:
+            if self.action_prefix is None:
+                self.action_prefix = self.prev_action_chunk
+            elif self.action_prefix != self.prev_action_chunk:
+                raise InterfaceValidationError(
+                    "ChunkRequest.action_prefix must match "
+                    "ChunkRequest.prev_action_chunk when both are provided."
+                )
+
+        if self.inference_delay is not None:
+            if self.prefix_length is None:
+                self.prefix_length = self.inference_delay
+            elif self.prefix_length != self.inference_delay:
+                raise InterfaceValidationError(
+                    "ChunkRequest.prefix_length must match "
+                    "ChunkRequest.inference_delay when both are provided."
+                )
 
 
 __all__ = [

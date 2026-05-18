@@ -173,6 +173,8 @@ def make_chunk_request(**kwargs: object) -> infra.ChunkRequest:
     prev_action_chunk = kwargs.pop("prev_action_chunk", None)
     inference_delay = kwargs.pop("inference_delay", None)
     execute_horizon = kwargs.pop("execute_horizon", None)
+    action_prefix = kwargs.pop("action_prefix", None)
+    prefix_length = kwargs.pop("prefix_length", None)
     rtc_args = kwargs.pop("rtc_args", None)
 
     if kwargs:
@@ -189,6 +191,8 @@ def make_chunk_request(**kwargs: object) -> infra.ChunkRequest:
         prev_action_chunk=prev_action_chunk,  # type: ignore[arg-type]
         inference_delay=inference_delay,  # type: ignore[arg-type]
         execute_horizon=execute_horizon,  # type: ignore[arg-type]
+        action_prefix=action_prefix,  # type: ignore[arg-type]
+        prefix_length=prefix_length,  # type: ignore[arg-type]
         rtc_args=rtc_args,  # type: ignore[arg-type]
     )
 

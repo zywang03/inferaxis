@@ -115,7 +115,7 @@ class InferenceRuntime:
         profile_output_dir: str | PathLike[str] | None = None,
         steps_before_request: int = 0,
         execution_steps: int | None = None,
-        warmup_requests: int = 1,
+        warmup_requests: int = 3,
         profile_delay_requests: int = 3,
         interpolation_steps: int = 0,
         ensemble_weight: BlendWeight | None = None,

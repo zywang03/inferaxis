@@ -228,6 +228,7 @@ class ChunkScheduler:
     _normalize_plan = actions._normalize_plan
 
     _build_rtc_args = rtc._build_rtc_args
+    _build_action_prefix = rtc._build_action_prefix
     _build_prev_action_chunk = rtc._build_prev_action_chunk
     _validate_chunk_length = rtc._validate_chunk_length
     _lock_rtc_chunk_total_length = rtc._lock_rtc_chunk_total_length

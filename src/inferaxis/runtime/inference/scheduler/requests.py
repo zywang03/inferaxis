@@ -62,6 +62,17 @@ def _build_request_job(
             launch_time_s=request_time_s,
             latency_hint_raw_steps=latency_steps,
         )
+    rtc_args = self._build_rtc_args(
+        remaining_chunk=buffer_actions,
+        inference_delay=latency_steps,
+        rtc_seed_chunk=rtc_seed_chunk,
+    )
+    prefix_source = buffer_actions if buffer_actions else rtc_seed_chunk
+    action_prefix = (
+        None
+        if rtc_args is None or not prefix_source
+        else self._build_action_prefix(source_chunk=prefix_source)
+    )
     return _RequestJob(
         request=ChunkRequest(
             request_step=request_step,
@@ -69,11 +80,9 @@ def _build_request_job(
             active_chunk_length=buffer_length,
             remaining_steps=buffer_length,
             latency_steps=latency_steps,
-            rtc_args=self._build_rtc_args(
-                remaining_chunk=buffer_actions,
-                inference_delay=latency_steps,
-                rtc_seed_chunk=rtc_seed_chunk,
-            ),
+            action_prefix=action_prefix,
+            prefix_length=None if rtc_args is None else latency_steps,
+            rtc_args=rtc_args,
         ),
         launch_buffer=launch_buffer,
         request_index=request_index,

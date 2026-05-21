@@ -40,7 +40,10 @@ class ChunkRequest:
     the same values are also mirrored onto ``prev_action_chunk``,
     ``inference_delay``, and ``execute_horizon`` directly on this object.
     For prefix-conditioning policy code, the current prefix window is also
-    exposed as ``action_prefix`` with ``prefix_length``.
+    exposed as ``action_prefix`` with ``prefix_length``. The prefix length is
+    the raw-step inference latency hint and may differ from the legacy RTC
+    ``inference_delay`` mirror when the latter is clamped to the execute
+    horizon for backward compatibility.
     Runtime hot paths treat any action objects exposed through this request as
     shared read-only references suitable for websocket / serialization
     consumers, not in-place mutation.
@@ -107,25 +110,13 @@ class ChunkRequest:
         self._sync_prefix_fields()
 
     def _sync_prefix_fields(self) -> None:
-        """Mirror RTC-style request hints onto prefix-style request fields."""
+        """Fill prefix-style request fields from RTC hints when omitted."""
 
-        if self.prev_action_chunk is not None:
-            if self.action_prefix is None:
-                self.action_prefix = self.prev_action_chunk
-            elif self.action_prefix != self.prev_action_chunk:
-                raise InterfaceValidationError(
-                    "ChunkRequest.action_prefix must match "
-                    "ChunkRequest.prev_action_chunk when both are provided."
-                )
+        if self.prev_action_chunk is not None and self.action_prefix is None:
+            self.action_prefix = self.prev_action_chunk
 
-        if self.inference_delay is not None:
-            if self.prefix_length is None:
-                self.prefix_length = self.inference_delay
-            elif self.prefix_length != self.inference_delay:
-                raise InterfaceValidationError(
-                    "ChunkRequest.prefix_length must match "
-                    "ChunkRequest.inference_delay when both are provided."
-                )
+        if self.inference_delay is not None and self.prefix_length is None:
+            self.prefix_length = self.inference_delay
 
 
 __all__ = [

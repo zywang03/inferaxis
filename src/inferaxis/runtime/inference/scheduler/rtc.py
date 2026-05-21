@@ -89,6 +89,28 @@ class RtcWindowBuilder:
             window.extend(pad_action for _ in range(total_pad_count))
         return window, execute_horizon
 
+    def build_action_prefix(
+        self,
+        *,
+        source_chunk: Sequence[Action],
+    ) -> list[Action]:
+        if not source_chunk:
+            raise InterfaceValidationError(
+                "Action prefix source must contain at least one action."
+            )
+        total_length = (
+            self.locked_chunk_total_length
+            if self.locked_chunk_total_length is not None
+            else len(source_chunk)
+        )
+        window_limit = min(len(source_chunk), total_length)
+        window = [source_chunk[index] for index in range(window_limit)]
+        total_pad_count = total_length - len(window)
+        if total_pad_count > 0:
+            pad_action = window[-1]
+            window.extend(pad_action for _ in range(total_pad_count))
+        return window
+
     def build_args(
         self,
         *,
@@ -124,6 +146,18 @@ def _build_rtc_args(
         remaining_chunk=remaining_chunk,
         inference_delay=inference_delay,
         rtc_seed_chunk=rtc_seed_chunk,
+    )
+
+
+def _build_action_prefix(
+    self,
+    *,
+    source_chunk: Sequence[Action],
+) -> list[Action]:
+    """Build the prefix-conditioning action window for one policy request."""
+
+    return self._rtc_window_builder.build_action_prefix(
+        source_chunk=source_chunk,
     )
 
 

@@ -1138,7 +1138,11 @@ class SchedulerTests(unittest.TestCase):
             [3.0, 4.0, 5.0, 5.0],
         )
         self.assertIsNotNone(with_rtc.request.rtc_args)
-        self.assertIs(with_rtc.request.action_prefix, with_rtc.request.prev_action_chunk)
+        assert with_rtc.request.action_prefix is not None
+        self.assertEqual(
+            [arm_value(action) for action in with_rtc.request.action_prefix],
+            [3.0, 4.0, 5.0, 5.0],
+        )
         self.assertEqual(with_rtc.request.prefix_length, 2)
 
     def test_chunk_scheduler_latency_steps_offset_changes_request_hints_without_affecting_trigger_logic(
@@ -1194,6 +1198,44 @@ class SchedulerTests(unittest.TestCase):
         )
         self.assertEqual(base_job.request.inference_delay, 2)
         self.assertEqual(shifted_job.request.inference_delay, 3)
+        self.assertEqual(base_job.request.prefix_length, 2)
+        self.assertEqual(shifted_job.request.prefix_length, 4)
+
+    def test_chunk_scheduler_action_prefix_keeps_latency_length_when_delay_exceeds_execution_steps(
+        self,
+    ) -> None:
+        scheduler = ChunkScheduler(
+            steps_before_request=0,
+            execution_steps=2,
+            enable_rtc=True,
+            fixed_latency_steps=3.0,
+            clock=lambda: 123.0,
+        )
+        accept_scheduler_chunk(
+            scheduler,
+            [
+                arm_action(10.0),
+                arm_action(11.0),
+                arm_action(12.0),
+                arm_action(13.0),
+            ],
+        )
+
+        job = scheduler._build_request_job(include_latency=True)
+
+        self.assertEqual(job.request.latency_steps, 3)
+        self.assertEqual(job.request.inference_delay, 2)
+        self.assertEqual(job.request.prefix_length, 3)
+        assert job.request.prev_action_chunk is not None
+        self.assertEqual(
+            [arm_value(action) for action in job.request.prev_action_chunk],
+            [10.0, 11.0, 11.0, 11.0],
+        )
+        assert job.request.action_prefix is not None
+        self.assertEqual(
+            [arm_value(action) for action in job.request.action_prefix],
+            [10.0, 11.0, 12.0, 13.0],
+        )
 
     def test_chunk_scheduler_latency_steps_offset_applies_even_when_rtc_is_disabled(
         self,

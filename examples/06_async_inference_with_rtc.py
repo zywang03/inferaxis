@@ -94,6 +94,8 @@ def main() -> None:
     policy = YourRtcPolicy()
     runtime = infra.InferenceRuntime.async_realtime(
         control_hz=50.0,
+        warmup_requests=3,
+        profile_delay_requests=3,
         execution_steps=3,
         enable_rtc=True,
         slow_rtc_bootstrap="warn",

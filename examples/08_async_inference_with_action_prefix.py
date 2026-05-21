@@ -58,7 +58,7 @@ class YourPrefixPolicy:
         plan: list[infra.Action] = []
         next_base = float(request.request_step * 3.0)
 
-        while len(plan) < 4:
+        while len(plan) < 7:
             plan.append(
                 infra.Action(
                     commands={
@@ -85,6 +85,7 @@ def main() -> None:
     policy = YourPrefixPolicy()
     runtime = infra.InferenceRuntime.async_realtime(
         control_hz=50.0,
+        steps_before_request=3,
         execution_steps=3,
         enable_rtc=True,
         slow_rtc_bootstrap="warn",
